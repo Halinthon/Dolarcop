@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Dólar COP</string>
+    <string name="widget_title">USD → COP</string>
+    <string name="widget_description">Muestra el valor del dólar en pesos colombianos</string>
+</resources>
