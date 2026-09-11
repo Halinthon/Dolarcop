@@ -22,9 +22,22 @@ import java.util.Locale
 class DolarWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        // Cada vez que el sistema pide actualizar el widget, mostramos lo último
+        // que haya en caché de inmediato Y disparamos un refresco en segundo plano
+        // (sin depender de que la app principal se haya abierto antes).
+        RatesUpdateScheduler.triggerImmediateUpdate(context)
         for (appWidgetId in appWidgetIds) {
             updateWidget(context, appWidgetManager, appWidgetId)
         }
+    }
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        // Se llama una sola vez, cuando se agrega la PRIMERA instancia del widget
+        // al escritorio. Programamos la actualización periódica y forzamos una
+        // actualización inmediata para que el widget no se quede en "Sin datos".
+        RatesUpdateScheduler.schedule(context)
+        RatesUpdateScheduler.triggerImmediateUpdate(context)
     }
 
     companion object {
@@ -51,7 +64,7 @@ class DolarWidgetProvider : AppWidgetProvider() {
                 }
                 views.setTextViewText(R.id.widget_value, "$ ${formatter.format(value.toDouble())}")
             } else {
-                views.setTextViewText(R.id.widget_value, "Sin datos")
+                views.setTextViewText(R.id.widget_value, "Actualizando…")
             }
 
             if (lastUpdated > 0L) {

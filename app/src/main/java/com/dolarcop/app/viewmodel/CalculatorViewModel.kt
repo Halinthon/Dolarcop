@@ -14,10 +14,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/** Indica cuál de los dos campos editó el usuario por última vez, para saber cuál recalcular. */
+enum class EditedSide { CURRENCY, COP }
+
 data class CalculatorUiState(
-    val amountText: String = "1",
+    val currencyAmountText: String = "1",
+    val copAmountText: String = "",
     val selectedCurrency: Currency = Currencies.ALL.first { it.code == "USD" },
-    val resultCOP: Double? = null,
+    val lastEditedSide: EditedSide = EditedSide.CURRENCY,
     val isLoading: Boolean = true,
     val isFromCache: Boolean = false,
     val lastUpdatedText: String = "",
@@ -71,29 +75,63 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
             lastUpdatedText = sdf.format(Date(updatedMillis)),
             errorMessage = null
         )
-        recalculate()
+        recalc()
     }
 
-    fun onAmountChanged(newText: String) {
-        // Solo dígitos y un separador decimal.
-        val filtered = newText.filter { it.isDigit() || it == '.' || it == ',' }
-        _uiState.value = _uiState.value.copy(amountText = filtered)
-        recalculate()
+    /** El usuario escribió un monto en la moneda seleccionada (ej. USD, EUR...). */
+    fun onCurrencyAmountChanged(newText: String) {
+        val filtered = sanitize(newText)
+        _uiState.value = _uiState.value.copy(
+            currencyAmountText = filtered,
+            lastEditedSide = EditedSide.CURRENCY
+        )
+        recalc()
+    }
+
+    /** El usuario escribió un monto en pesos colombianos (COP). */
+    fun onCopAmountChanged(newText: String) {
+        val filtered = sanitize(newText)
+        _uiState.value = _uiState.value.copy(
+            copAmountText = filtered,
+            lastEditedSide = EditedSide.COP
+        )
+        recalc()
     }
 
     fun onCurrencySelected(currency: Currency) {
         _uiState.value = _uiState.value.copy(selectedCurrency = currency)
-        recalculate()
+        recalc()
     }
 
-    private fun recalculate() {
+    private fun sanitize(text: String): String = text.filter { it.isDigit() || it == '.' || it == ',' }
+
+    /**
+     * Recalcula el campo "opuesto" al que el usuario acaba de editar, manteniendo
+     * el campo editado intacto. Esto es lo que hace la calculadora bidireccional.
+     */
+    private fun recalc() {
         val state = _uiState.value
-        val amount = state.amountText.replace(",", ".").toDoubleOrNull()
-        if (amount == null || state.rates.isEmpty()) {
-            _uiState.value = state.copy(resultCOP = null)
-            return
+        if (state.rates.isEmpty()) return
+
+        when (state.lastEditedSide) {
+            EditedSide.CURRENCY -> {
+                val amount = state.currencyAmountText.replace(",", ".").toDoubleOrNull()
+                val cop = amount?.let {
+                    repository.convertToCOP(it, state.selectedCurrency.code, state.rates)
+                }
+                _uiState.value = state.copy(copAmountText = cop?.let { formatPlain(it) } ?: "")
+            }
+            EditedSide.COP -> {
+                val amountCop = state.copAmountText.replace(",", ".").toDoubleOrNull()
+                val inCurrency = amountCop?.let {
+                    repository.convertFromCOP(it, state.selectedCurrency.code, state.rates)
+                }
+                _uiState.value = state.copy(currencyAmountText = inCurrency?.let { formatPlain(it) } ?: "")
+            }
         }
-        val result = repository.convertToCOP(amount, state.selectedCurrency.code, state.rates)
-        _uiState.value = state.copy(resultCOP = result)
+    }
+
+    private fun formatPlain(value: Double): String {
+        return String.format(Locale.US, "%.2f", value)
     }
 }

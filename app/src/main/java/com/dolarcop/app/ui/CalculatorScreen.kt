@@ -1,15 +1,14 @@
 package com.dolarcop.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,8 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.dolarcop.app.data.Currencies
 import com.dolarcop.app.data.Currency
 import com.dolarcop.app.viewmodel.CalculatorViewModel
-import java.text.NumberFormat
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,16 +27,10 @@ fun CalculatorScreen(viewModel: CalculatorViewModel) {
     val state by viewModel.uiState.collectAsState()
     var showCurrencyPicker by remember { mutableStateOf(false) }
 
-    val copFormatter = remember {
-        NumberFormat.getNumberInstance(Locale("es", "CO")).apply {
-            maximumFractionDigits = 2
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dólar y monedas → COP", fontWeight = FontWeight.Bold) },
+                title = { Text("Convertidor a COP", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Actualizar tasas")
@@ -65,20 +56,11 @@ fun CalculatorScreen(viewModel: CalculatorViewModel) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            Text("Monto", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-            Spacer(Modifier.height(6.dp))
-            OutlinedTextField(
-                value = state.amountText,
-                onValueChange = viewModel::onAmountChanged,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 22.sp)
-            )
+            Text("Puedes escribir en cualquiera de los dos campos:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(Modifier.height(20.dp))
-
-            Text("Moneda de origen", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            // Campo 1: moneda seleccionada (ej. USD, EUR...)
+            Text("Monto en moneda extranjera", fontWeight = FontWeight.Medium, fontSize = 14.sp)
             Spacer(Modifier.height(6.dp))
             OutlinedCard(
                 modifier = Modifier
@@ -86,49 +68,54 @@ fun CalculatorScreen(viewModel: CalculatorViewModel) {
                     .clickable { showCurrencyPicker = true }
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(state.selectedCurrency.flag, fontSize = 24.sp)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(state.selectedCurrency.code, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        Text(state.selectedCurrency.name, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(Icons.Filled.Search, contentDescription = "Buscar moneda")
+                    Text(state.selectedCurrency.flag, fontSize = 22.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(state.selectedCurrency.code, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Icon(Icons.Filled.Search, contentDescription = "Cambiar moneda", modifier = Modifier.padding(start = 4.dp).size(16.dp))
                 }
             }
-
-            Spacer(Modifier.height(28.dp))
-
-            Card(
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.currencyAmountText,
+                onValueChange = viewModel::onCurrencyAmountChanged,
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
-                    Text(
-                        "Equivalente en pesos colombianos",
-                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
-                        fontSize = 13.sp
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    val resultText = state.resultCOP?.let { "$ ${copFormatter.format(it)} COP" } ?: "—"
-                    Text(
-                        resultText,
-                        color = androidx.compose.ui.graphics.Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp
-                    )
-                }
-            }
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 22.sp),
+                suffix = { Text(state.selectedCurrency.code) }
+            )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                Icon(
+                    Icons.Filled.SwapVert,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+
+            // Campo 2: pesos colombianos
+            Text("Monto en pesos colombianos (COP)", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            Spacer(Modifier.height(6.dp))
+            OutlinedTextField(
+                value = state.copAmountText,
+                onValueChange = viewModel::onCopAmountChanged,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold),
+                suffix = { Text("COP") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+                )
+            )
+
+            Spacer(Modifier.height(20.dp))
 
             if (state.lastUpdatedText.isNotEmpty()) {
                 Text(

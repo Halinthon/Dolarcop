@@ -92,4 +92,15 @@ class ExchangeRepository(private val context: Context) {
         val amountInUsd = amount / rateFrom
         return amountInUsd * rateCop
     }
+
+    /**
+     * Convierte [amountCop] (pesos colombianos) al equivalente en la moneda [toCode].
+     * Es la operación inversa de [convertToCOP].
+     */
+    fun convertFromCOP(amountCop: Double, toCode: String, rates: Map<String, Double>): Double? {
+        val rateCop = rates["COP"] ?: return null
+        val rateTo = rates[toCode] ?: return null
+        val amountInUsd = amountCop / rateCop
+        return amountInUsd * rateTo
+    }
 }
