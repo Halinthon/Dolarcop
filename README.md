@@ -1,32 +1,20 @@
 # Dólar COP 🇨🇴💵
 
 App Android nativa (Kotlin + Jetpack Compose) que calcula el valor en **pesos colombianos (COP)**
-de cualquier moneda del mundo, y muestra un **widget de escritorio** con el valor actual del dólar
-(USD → COP), actualizado automáticamente en segundo plano.
-
-## ⚠️ Nota importante sobre el "ícono con el valor del dólar"
-
-Android **no permite** que el ícono de lanzador de una app muestre texto/valores dinámicos —
-los íconos son imágenes estáticas. Por eso esta app resuelve tu necesidad real (ver fácilmente
-el valor del dólar desde el escritorio) con un **widget** (que sí se actualiza automáticamente
-y se puede colocar junto a los demás íconos), más un ícono de app fijo con el símbolo `$`.
+de cualquier moneda del mundo, y viceversa (COP → moneda extranjera).
 
 ## Funcionalidades
 
-- **Widget de escritorio** "USD → COP" que se actualiza cada 6 horas automáticamente (WorkManager).
-- **Calculadora** dentro de la app: elige cualquier moneda del mundo (con buscador), ingresa un
-  monto y obtén al instante su equivalente en pesos colombianos.
+- **Calculadora bidireccional**: elige cualquier moneda del mundo (con buscador), escribe un
+  monto en esa moneda o directamente en pesos colombianos, y el otro campo se calcula al instante.
 - **Funciona sin internet**: guarda en caché local (Room) la última tasa conocida.
 - **API gratuita, sin necesidad de registro ni API Key**: [open.er-api.com](https://www.exchangerate-api.com/docs/free)
-  (actualiza tasas aprox. cada 24h en su capa gratuita). Si más adelante quieres actualizaciones
-  más frecuentes, puedes migrar a una API con key (ver sección "Mejoras futuras").
+  (actualiza tasas aprox. cada 24h en su capa gratuita).
 
 ## Arquitectura
 
 ```
 UI (Jetpack Compose) → ViewModel → Repository → Retrofit (API) + Room (caché local)
-                                             ↳ SharedPreferences (lectura rápida para el widget)
-WorkManager → refresca tasas cada 6h → actualiza el AppWidgetProvider
 ```
 
 ## Estructura del proyecto
@@ -41,9 +29,8 @@ DolarCOP/
 │       │   ├── MainActivity.kt
 │       │   ├── data/            (API, Room, Repositorio, lista de monedas)
 │       │   ├── viewmodel/       (lógica de la calculadora)
-│       │   ├── ui/              (pantallas Compose + tema)
-│       │   └── widget/          (widget de escritorio + tareas en segundo plano)
-│       └── res/                 (layouts, strings, íconos, config del widget)
+│       │   └── ui/              (pantallas Compose + tema)
+│       └── res/                 (strings, íconos)
 ├── .github/workflows/build-apk.yml   (compila el APK automáticamente en GitHub Actions)
 ├── build.gradle.kts / settings.gradle.kts / gradle.properties
 └── README.md
@@ -82,8 +69,6 @@ DolarCOP/
 1. Copia el `.apk` a tu teléfono (o descárgalo directo desde GitHub Actions en el navegador del celular).
 2. Actívalo la primera vez en **Ajustes → Seguridad → Instalar apps de fuentes desconocidas**.
 3. Abre el archivo `.apk` para instalarlo.
-4. Para agregar el widget: mantén presionado el escritorio → **Widgets** → busca **"Dólar COP"** →
-   arrástralo a la pantalla.
 
 ## Posibles mejoras futuras
 

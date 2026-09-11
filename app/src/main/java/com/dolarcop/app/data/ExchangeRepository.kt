@@ -10,18 +10,13 @@ import kotlinx.coroutines.withContext
  * Fuente única de verdad para las tasas de cambio.
  * - Intenta refrescar desde la API.
  * - Si falla (sin internet, error del servidor), usa la última copia guardada en Room.
- * - Además guarda en SharedPreferences un resumen rápido (USD->COP) para que el
- *   widget de escritorio pueda leerlo de forma instantánea sin tocar Room/red.
  */
 class ExchangeRepository(private val context: Context) {
 
     private val dao = AppDatabase.getInstance(context).ratesCacheDao()
     private val gson = Gson()
-    private val prefs = context.getSharedPreferences("dolar_widget_prefs", Context.MODE_PRIVATE)
 
     companion object {
-        const val PREF_USD_TO_COP = "usd_to_cop"
-        const val PREF_LAST_UPDATED = "last_updated_millis"
         private const val BASE = "USD"
     }
 
@@ -47,13 +42,6 @@ class ExchangeRepository(private val context: Context) {
                     lastUpdateApi = response.lastUpdateUtc
                 )
             )
-
-            response.rates["COP"]?.let { copPerUsd ->
-                prefs.edit()
-                    .putFloat(PREF_USD_TO_COP, copPerUsd.toFloat())
-                    .putLong(PREF_LAST_UPDATED, now)
-                    .apply()
-            }
 
             Result.success(
                 RatesResult(

@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import com.dolarcop.app.ui.CalculatorScreen
 import com.dolarcop.app.ui.theme.DolarCOPTheme
 import com.dolarcop.app.viewmodel.CalculatorViewModel
-import com.dolarcop.app.widget.RatesUpdateScheduler
 
 class MainActivity : ComponentActivity() {
 
@@ -18,9 +17,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Programa la actualización periódica de tasas en segundo plano (para el widget).
-        RatesUpdateScheduler.schedule(applicationContext)
 
         setContent {
             DolarCOPTheme {
